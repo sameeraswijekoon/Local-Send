@@ -30,6 +30,7 @@ export default function Home() {
   const connectRef = useRef<(c: string, n: string) => void>(() => {});
   function send(message: object) { if (socket.current?.readyState !== WebSocket.OPEN) { setNotice('Connection lost. Please reconnect.'); return false; } socket.current.send(JSON.stringify(message)); return true; }
   const onlineMode = typeof window !== 'undefined' && !!window.NEARSHARE_CONFIG;
+  const onlineConfigured = onlineMode && !!window.NEARSHARE_CONFIG?.signalingUrl.trim();
   function handleMessage(event: { data: string }) {
     const msg = JSON.parse(event.data);
     if (msg.type === 'joined') { token.current = msg.token || ''; setSelf(msg.self); setConnected(true); setConnecting(false); sessionStorage.setItem('nearshare-code', code); localStorage.setItem('nearshare-name', name); return; }
@@ -56,7 +57,7 @@ export default function Home() {
     if (socket.current) { socket.current.onclose = null; socket.current.close(); }
     setConnecting(true);
     if (onlineMode) {
-      if (!window.NEARSHARE_CONFIG?.signalingUrl.trim()) {
+      if (!onlineConfigured) {
         setConnecting(false);
         setNotice('Online sharing needs a signaling URL. Set it in config.js, then refresh.');
         return;
@@ -87,6 +88,7 @@ export default function Home() {
   useEffect(() => {
     mounted.current = true; const deviceName = localStorage.getItem('nearshare-name') || defaultName(); setName(deviceName);
     if (onlineMode) {
+      if (!onlineConfigured) { setConnecting(false); return; }
       const room = new URLSearchParams(location.hash.slice(1)).get('room') || sessionStorage.getItem('nearshare-code') || newId();
       if (location.hash) history.replaceState(null, '', location.pathname);
       setCode(room); setUrls([location.origin + location.pathname]); setSelectedUrl(location.origin + location.pathname); connectRef.current(room, deviceName); return;
@@ -142,7 +144,7 @@ export default function Home() {
   return <div className="app-shell">
     <header className="topbar"><a className="brand" href="./"><span className="brand-mark"><Send size={23} /></span>NearShare<span className="brand-label">LOCAL SHARING</span></a><div className="header-actions"><span className={`connection-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'Connected to your room' : connecting ? 'Connecting…' : 'Not connected'}</span><button className="icon-button" onClick={() => setHelpOpen(true)} aria-label="How sharing works"><CircleHelp size={21} /></button></div></header>
     <main className="main"><div className="page-heading"><div><div className="eyebrow"><Wifi size={15} /> A LITTLE CLOSER. A LOT EASIER.</div><h1>Your files. Just a hop away.</h1><p>Share with your other devices, right here on your network.</p></div><button className="button secondary join-button" disabled={!connected} onClick={() => setShareOpen(true)}><Plus size={18} />Connect a device</button></div>
-      {!connected && <section className="join-banner"><div><strong>{connecting ? 'Connecting to your sharing room…' : 'Join your sharing room'}</strong><p>Enter the six-digit code shown on the host computer.</p></div><form onSubmit={(e) => { e.preventDefault(); connect(code, name); }}><input aria-label="Room code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} placeholder="000000" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required /><button className="button primary" disabled={connecting || code.length !== 6}>{connecting ? <LoaderCircle className="spin" size={18} /> : 'Join room'}</button></form></section>}
+      {!connected && <section className="join-banner">{onlineMode && !onlineConfigured ? <div><strong>Online sharing needs setup</strong><p>Add your Cloudflare signaling URL to config.js, then refresh this page. The QR invitation becomes available after the service connects.</p></div> : <><div><strong>{connecting ? 'Connecting to your sharing room…' : 'Join your sharing room'}</strong><p>{onlineMode ? 'Open an invitation link from the host device.' : 'Enter the six-digit code shown on the host computer.'}</p></div><form onSubmit={(e) => { e.preventDefault(); connect(code, name); }}><input aria-label="Room code" inputMode={onlineMode ? 'text' : 'numeric'} pattern={onlineMode ? '[a-fA-F0-9]{32}' : '[0-9]{6}'} maxLength={onlineMode ? 32 : 6} placeholder={onlineMode ? 'Invitation room ID' : '000000'} value={code} onChange={(e) => setCode(onlineMode ? e.target.value.replace(/[^a-f0-9]/gi, '').toLowerCase() : e.target.value.replace(/\D/g, ''))} required /><button className="button primary" disabled={connecting || code.length !== (onlineMode ? 32 : 6)}>{connecting ? <LoaderCircle className="spin" size={18} /> : 'Join room'}</button></form></>}</section>}
       <div className="workspace"><section className="send-panel panel"><div className="section-title"><div className="title-with-icon"><span className="small-icon"><ArrowUpRight size={20} /></span><h2>Send something</h2></div><span className="step-label">01 / SELECT</span></div>
         <Tabs value={tab} onValueChange={(value) => setTab(String(value))} className="send-tabs"><TabsList className="file-tabs"><TabsTrigger value="files"><File size={16} />Files</TabsTrigger><TabsTrigger value="text"><MessageSquare size={16} />Text & links</TabsTrigger></TabsList>
         <TabsContent value="files"><input ref={fileInput} type="file" multiple className="sr-only" tabIndex={-1} onChange={(e) => { addFiles(Array.from(e.target.files || [])); e.target.value = ''; }} /><button className={`dropzone ${dragging ? 'dragging' : ''}`} onClick={() => fileInput.current?.click()} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(Array.from(e.dataTransfer.files)); }}><span className="upload-icon"><FolderUp size={33} strokeWidth={1.5} /></span><strong>{dragging ? 'Drop them here' : 'Drop files here'}</strong><span>or <b>browse your device</b></span><small>Photos, videos, documents. Anything you need to send.</small></button>
