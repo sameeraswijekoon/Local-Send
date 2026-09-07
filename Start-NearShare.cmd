@@ -14,5 +14,7 @@ if not exist "dist\lan\index.html" (
   pause
   exit /b 1
 )
+echo Opening NearShare in your browser...
+start "" /min powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Start-Process 'http://localhost:3344'"
 "%nearshare_node%" server\index.mjs
 if errorlevel 1 pause
