@@ -22,7 +22,7 @@ for (const dependency of ['ws', 'yazl', 'buffer-crc32']) {
   const source = await realpath(path.join(root, 'node_modules', dependency));
   await cp(source, path.join(app, 'node_modules', dependency), { recursive: true });
 }
-await writeFile(path.join(app, 'Start NearShare.cmd'), `@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\necho NearShare is starting...\r\nstart "" /min powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Start-Process 'http://localhost:3344'"\r\n"%~dp0runtime\\node.exe" "%~dp0server\\index.mjs"\r\nif errorlevel 1 pause\r\n`);
+await writeFile(path.join(app, 'Start NearShare.cmd'), `@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\necho NearShare is starting...\r\necho Your browser will open automatically when it is ready.\r\n"%~dp0runtime\\node.exe" "%~dp0server\\index.mjs" --open\r\nif errorlevel 1 pause\r\n`);
 await writeFile(path.join(app, 'README.txt'), 'NearShare Portable\r\n\r\n1. Double-click Start NearShare.cmd.\r\n2. Your browser opens on the host PC.\r\n3. Scan the QR code from another device on the same Wi-Fi or hotspot.\r\n4. Keep the NearShare window open while sharing.\r\n');
 await mkdir(path.join(root, 'release'), { recursive: true });
 await exec('tar.exe', ['-a', '-c', '-f', path.join(root, 'release', 'NearShare-Portable.zip'), '-C', stage, 'NearShare']);

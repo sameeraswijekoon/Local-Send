@@ -3,6 +3,7 @@ import { networkInterfaces } from 'node:os';
 import { randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { PassThrough, Transform, pipeline } from 'node:stream';
 import { createReadStream, existsSync, statSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
@@ -225,5 +226,11 @@ export async function createLanServer({ port = 3344, host = '0.0.0.0', roomCode 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const app = await createLanServer({ port: Number(process.env.PORT || 3344), dev: process.argv.includes('--dev') });
   console.log(`\nNearShare is ready\nLocal: http://localhost:${app.server.address().port}\n${app.urls.map((url) => `Network: ${url}`).join('\n')}\nRoom code: ${app.roomCode}\nKeep this server running while sharing.\n`);
+  if (process.argv.includes('--open')) {
+    const localUrl = `http://localhost:${app.server.address().port}`;
+    if (process.platform === 'win32') spawn('cmd.exe', ['/c', 'start', '', localUrl], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    else if (process.platform === 'darwin') spawn('open', [localUrl], { detached: true, stdio: 'ignore' }).unref();
+    else spawn('xdg-open', [localUrl], { detached: true, stdio: 'ignore' }).unref();
+  }
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { await app.close(); process.exit(0); });
 }
