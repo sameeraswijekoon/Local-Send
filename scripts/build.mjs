@@ -43,7 +43,7 @@ await build({
 const builtCss = await readFile(path.join(output, 'app.css'), 'utf8');
 const builtJs = await readFile(path.join(output, 'app.js'));
 const version = createHash('sha256').update(builtJs).digest('hex').slice(0, 12);
-const html = (await readFile(path.join(root, 'index.html'), 'utf8'))
+const html = (await readFile(path.join(root, 'index.template.html'), 'utf8'))
   .replace('</head>', `<style id="nearshare-styles">${builtCss.replace(/<\/style/gi, '<\\/style')}</style></head>`)
   .replace('<script type="module" src="/app/main.tsx"></script>', `<script type="module" src="/app.js?v=${version}"></script>`);
 await writeFile(path.join(output, 'index.html'), html);
