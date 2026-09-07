@@ -9,6 +9,7 @@
     "dev": "node scripts/build.mjs && node server/index.mjs",
     "build": "node scripts/build.mjs",
     "build:pages": "node scripts/build-pages.mjs",
+    "build:portable": "node scripts/build-portable.mjs",
     "preview:pages": "node scripts/preview-pages.mjs",
     "preview:root": "node scripts/preview-pages.mjs --root",
     "start": "node server/index.mjs",

@@ -38,3 +38,5 @@ next-env.d.ts
 /work/
 node_modules.previous-install/
 *.log
+/portable/
+/.workerd-download/
