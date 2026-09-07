@@ -1,0 +1,7 @@
+# The LAN build uses WebAssembly. These unused native tool postinstall scripts
+# remain disabled; they are not needed to build or run NearShare.
+nodeLinker: hoisted
+allowBuilds:
+  esbuild: false
+  sharp: false
+  workerd: false
