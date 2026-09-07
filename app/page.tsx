@@ -56,6 +56,11 @@ export default function Home() {
     if (socket.current) { socket.current.onclose = null; socket.current.close(); }
     setConnecting(true);
     if (onlineMode) {
+      if (!window.NEARSHARE_CONFIG?.signalingUrl.trim()) {
+        setConnecting(false);
+        setNotice('Online sharing needs a signaling URL. Set it in config.js, then refresh.');
+        return;
+      }
       try {
         const ws = new OnlineConnection(joinCode, window.NEARSHARE_CONFIG!, (transferId) => pendingFiles.current.get(transferId)); socket.current = ws;
         ws.onopen = () => ws.send(JSON.stringify({ type: 'join', name: deviceName, kind: deviceKind() }));
@@ -135,7 +140,7 @@ export default function Home() {
     } catch (e) { setNotice(e instanceof Error ? e.message : 'Could not accept the transfer.'); } finally { setAccepting(false); }
   }
   return <div className="app-shell">
-    <header className="topbar"><a className="brand" href="/"><span className="brand-mark"><Send size={23} /></span>NearShare<span className="brand-label">LOCAL SHARING</span></a><div className="header-actions"><span className={`connection-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'Connected to your room' : connecting ? 'Connecting…' : 'Not connected'}</span><button className="icon-button" onClick={() => setHelpOpen(true)} aria-label="How sharing works"><CircleHelp size={21} /></button></div></header>
+    <header className="topbar"><a className="brand" href="./"><span className="brand-mark"><Send size={23} /></span>NearShare<span className="brand-label">LOCAL SHARING</span></a><div className="header-actions"><span className={`connection-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'Connected to your room' : connecting ? 'Connecting…' : 'Not connected'}</span><button className="icon-button" onClick={() => setHelpOpen(true)} aria-label="How sharing works"><CircleHelp size={21} /></button></div></header>
     <main className="main"><div className="page-heading"><div><div className="eyebrow"><Wifi size={15} /> A LITTLE CLOSER. A LOT EASIER.</div><h1>Your files. Just a hop away.</h1><p>Share with your other devices, right here on your network.</p></div><button className="button secondary join-button" disabled={!connected} onClick={() => setShareOpen(true)}><Plus size={18} />Connect a device</button></div>
       {!connected && <section className="join-banner"><div><strong>{connecting ? 'Connecting to your sharing room…' : 'Join your sharing room'}</strong><p>Enter the six-digit code shown on the host computer.</p></div><form onSubmit={(e) => { e.preventDefault(); connect(code, name); }}><input aria-label="Room code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} placeholder="000000" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required /><button className="button primary" disabled={connecting || code.length !== 6}>{connecting ? <LoaderCircle className="spin" size={18} /> : 'Join room'}</button></form></section>}
       <div className="workspace"><section className="send-panel panel"><div className="section-title"><div className="title-with-icon"><span className="small-icon"><ArrowUpRight size={20} /></span><h2>Send something</h2></div><span className="step-label">01 / SELECT</span></div>
